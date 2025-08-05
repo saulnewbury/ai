@@ -12,6 +12,7 @@ interface SavedTranscript {
   audioDuration?: number
   createdAt: string
   updatedAt: string
+  serviceUsed?: 'assemblyai' | 'scrape_creators'
 }
 
 export default function TranscriptDetailPage() {
@@ -58,11 +59,18 @@ export default function TranscriptDetailPage() {
   const downloadTranscript = () => {
     if (!transcript) return
 
+    const serviceInfo = transcript.serviceUsed
+      ? `\nService: ${
+          transcript.serviceUsed === 'assemblyai'
+            ? 'AssemblyAI'
+            : 'Scrape Creators'
+        }`
+      : ''
     const content = `Title: ${transcript.videoTitle}\nURL: ${
       transcript.videoUrl
-    }\nDate: ${new Date(transcript.createdAt).toLocaleString()}\n\n${
-      transcript.text
-    }`
+    }\nDate: ${new Date(
+      transcript.createdAt
+    ).toLocaleString()}${serviceInfo}\n\n${transcript.text}`
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -98,6 +106,40 @@ export default function TranscriptDetailPage() {
       return `${hours}h ${remainingMinutes}m`
     }
     return `${minutes} minutes`
+  }
+
+  const getServiceBadge = (service?: 'assemblyai' | 'scrape_creators') => {
+    if (!service) return null
+
+    const serviceConfig = {
+      assemblyai: {
+        label: 'AssemblyAI',
+        className:
+          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        description: 'AI-powered transcription'
+      },
+      scrape_creators: {
+        label: 'Scrape Creators',
+        className:
+          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        description: 'Caption extraction'
+      }
+    }
+
+    const config = serviceConfig[service]
+
+    return (
+      <div className='flex items-center gap-2'>
+        <span
+          className={`px-3 py-1 rounded-full text-sm font-medium ${config.className}`}
+        >
+          {config.label}
+        </span>
+        <span className='text-xs text-gray-500 dark:text-gray-400'>
+          {config.description}
+        </span>
+      </div>
+    )
   }
 
   if (loading) {
@@ -150,6 +192,8 @@ export default function TranscriptDetailPage() {
           <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-4 mb-[10px]'>
             {transcript.videoTitle}
           </h1>
+
+          <div className='mb-3'>{getServiceBadge(transcript.serviceUsed)}</div>
 
           <div className='flex flex-wrap items-center gap-4 text-sm text-[#888888] dark:text-gray-400 mb-4 mb-[10px]'>
             <span>Duration: {formatDuration(transcript.audioDuration)}</span>

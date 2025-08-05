@@ -18,7 +18,8 @@ export async function GET() {
 // POST - Save a new transcript
 export async function POST(request: NextRequest) {
   try {
-    const { videoTitle, videoUrl, text, audioDuration } = await request.json()
+    const { videoTitle, videoUrl, text, audioDuration, serviceUsed } =
+      await request.json()
 
     if (!videoTitle || !videoUrl || !text) {
       return NextResponse.json(
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
       videoTitle,
       videoUrl,
       text,
-      audioDuration
+      audioDuration,
+      serviceUsed: serviceUsed || 'assemblyai' // default to assemblyai for backward compatibility
     })
 
     return NextResponse.json(savedTranscript, { status: 201 })

@@ -11,6 +11,7 @@ interface SavedTranscript {
   audioDuration?: number
   createdAt: string
   updatedAt: string
+  serviceUsed?: 'assemblyai' | 'scrape_creators'
 }
 
 export default function TranscriptsPage() {
@@ -79,6 +80,33 @@ export default function TranscriptsPage() {
   const truncateText = (text: string, maxLength: number = 150) => {
     if (text.length <= maxLength) return text
     return text.substring(0, maxLength) + '...'
+  }
+
+  const getServiceBadge = (service?: 'assemblyai' | 'scrape_creators') => {
+    if (!service) return null
+
+    const serviceConfig = {
+      assemblyai: {
+        label: 'AssemblyAI',
+        className:
+          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      },
+      scrape_creators: {
+        label: 'Scrape Creators',
+        className:
+          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      }
+    }
+
+    const config = serviceConfig[service]
+
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}
+      >
+        {config.label}
+      </span>
+    )
   }
 
   if (loading) {
@@ -159,9 +187,12 @@ export default function TranscriptsPage() {
             >
               <div className='flex justify-between items-start'>
                 <div className='flex-1'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-[10px] mr-[10px]'>
-                    {transcript.videoTitle}
-                  </h3>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <h3 className='text-xl font-semibold text-gray-900 dark:text-white mr-[10px]'>
+                      {transcript.videoTitle}
+                    </h3>
+                    {getServiceBadge(transcript.serviceUsed)}
+                  </div>
 
                   <div className=''>
                     <p className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-[10px]'>
