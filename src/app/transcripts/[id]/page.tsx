@@ -164,7 +164,7 @@ export default function TranscriptDetailPage() {
               rel='noopener noreferrer'
               className='px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm'
             >
-              View source
+              Source video
             </a>
             <div>
               <button

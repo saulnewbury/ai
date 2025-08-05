@@ -169,7 +169,7 @@ export default function TranscriptsPage() {
                     </p>
                   </div>
 
-                  <div className='flex items-center gap-4 text-sm text-[#aaaaaa] mb-[10px]'>
+                  <div className='flex items-center gap-4 text-sm text-[#999999] mb-[10px]'>
                     <span>{formatDate(transcript.createdAt)}</span>
                     <span className='px-[5px]'>•</span>
                     <span>
@@ -182,7 +182,7 @@ export default function TranscriptsPage() {
                     rel='noopener noreferrer'
                     className='text-blue-600 dark:text-blue-400 hover:underline text-sm'
                   >
-                    View source
+                    Source video
                   </a>
                 </div>
                 <div className='flex gap-2 ml-4'>
