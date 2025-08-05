@@ -151,7 +151,7 @@ export default function TranscriptsPage() {
           </Link>
         </div>
       ) : (
-        <div className='grid gap-6 p-[15px]'>
+        <div className='grid gap-[10px] p-[15px]'>
           {transcripts.map((transcript) => (
             <div
               key={transcript.id}
@@ -159,7 +159,7 @@ export default function TranscriptsPage() {
             >
               <div className='flex justify-between items-start'>
                 <div className='flex-1'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-[10px]'>
+                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-[10px] mr-[10px]'>
                     {transcript.videoTitle}
                   </h3>
 
@@ -186,10 +186,7 @@ export default function TranscriptsPage() {
                   </a>
                 </div>
                 <div className='flex gap-2 ml-4'>
-                  <button
-                    onClick={() => deleteTranscript(transcript.id)}
-                    className='w-[4rem] py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors mr-[5px] border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
-                  >
+                  <button className='w-[4rem] cursor-pointer py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors mr-[5px] border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'>
                     <Link
                       href={`/transcripts/${transcript.id}`}
                       className='bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors'
@@ -199,7 +196,7 @@ export default function TranscriptsPage() {
                   </button>
                   <button
                     onClick={() => deleteTranscript(transcript.id)}
-                    className='w-[4rem] py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
+                    className='w-[4rem] cursor-pointer py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
                   >
                     Delete
                   </button>

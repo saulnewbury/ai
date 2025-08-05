@@ -95,6 +95,16 @@ export default function Home() {
 
   return (
     <main className='container mx-auto px-4 py-8 max-w-4xl'>
+      <div className='text-right pt-[15px]'>
+        <button className='border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px] text-black'>
+          <Link
+            href='/transcripts'
+            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
+          >
+            View Saved
+          </Link>
+        </button>
+      </div>
       <div className='flex justify-between items-center mb-8 p-[15px]'>
         <div className='text-center flex-1'>
           <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-[15px]'>
@@ -106,12 +116,6 @@ export default function Home() {
           <p className='text-sm text-gray-500 dark:text-gray-500'>
             ⚡ Works best with videos under 30 minutes
           </p>
-          <Link
-            href='/transcripts'
-            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
-          >
-            View Saved
-          </Link>
         </div>
       </div>
 
@@ -122,13 +126,13 @@ export default function Home() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder='https://www.youtube.com/watch?v=...'
-            className='h-[50px] rounded-full border-[1px] outline-none px-[15px] mb-[10px]'
+            className='h-[50px] rounded-full border-[1px] outline-none px-[25px] mb-[10px] border-[#dddddd]'
             required
           />
           <button
             type='submit'
             disabled={loading}
-            className='h-[50px] rounded-full border-[1px] outline-none px-[15px] cursor-pointer'
+            className='h-[50px] rounded-full border-none outline-none px-[15px] cursor-pointer'
           >
             {loading ? 'Transcribing...' : 'Transcribe'}
           </button>
@@ -159,16 +163,16 @@ export default function Home() {
       )}
 
       {transcript && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6'>
-          <div className='flex justify-between items-start mb-4'>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 p-[15px]'>
+          <div className='flex flex-col-reverse justify-between items-start mb-4'>
             <div className='flex-1'>
-              <h2 className='text-2xl font-semibold text-gray-900 dark:text-white mb-2'>
+              <h2 className='text-2xl font-semibold text-gray-900 dark:text-white mb-[10px]'>
                 {transcript.video_title || 'Transcript'}
               </h2>
-              <div className='text-sm text-gray-600 dark:text-gray-400'>
+              <div className='text-sm text-gray-600 dark:text-gray-400 mb-[15px]'>
                 Status: <span className='font-medium'>{transcript.status}</span>
                 {transcript.audio_duration && (
-                  <span className='ml-4'>
+                  <span className='ml-4 block'>
                     Duration: {Math.round(transcript.audio_duration / 60)}{' '}
                     minutes
                   </span>
@@ -179,7 +183,7 @@ export default function Home() {
               <button
                 onClick={saveTranscript}
                 disabled={saving || saved}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px] mb-[15px] cursor-pointer ${
                   saved
                     ? 'bg-green-600 text-white'
                     : saving
