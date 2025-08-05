@@ -19,3 +19,11 @@
 body {
   color: rgb(var(--foreground-rgb));
 }
+
+* {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}

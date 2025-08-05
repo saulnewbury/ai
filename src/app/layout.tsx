@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en'>
-      <body className='font-sans antialiased'>{children}</body>
+      <body className='font-sans antialiased flex justify-center'>
+        <div className='max-w-[600px]'>{children}</div>
+      </body>
     </html>
   )
 }

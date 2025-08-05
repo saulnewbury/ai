@@ -96,7 +96,7 @@ export default function TranscriptsPage() {
 
   return (
     <main className='container mx-auto px-4 py-8 max-w-6xl'>
-      <div className='flex justify-between items-center mb-8'>
+      <div className='flex justify-between items-center mb-8 p-[15px]'>
         <div>
           <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-2'>
             Saved Transcripts
@@ -108,9 +108,9 @@ export default function TranscriptsPage() {
         </div>
         <Link
           href='/'
-          className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+          className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-[black]'
         >
-          New Transcript
+          New Transcript &gt;
         </Link>
       </div>
 
@@ -151,23 +151,30 @@ export default function TranscriptsPage() {
           </Link>
         </div>
       ) : (
-        <div className='grid gap-6'>
+        <div className='grid gap-6 p-[15px]'>
           {transcripts.map((transcript) => (
             <div
               key={transcript.id}
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700'
+              className='bg-white dark:bg-gray-800 rounded-[15px] p-[15px] shadow-lg p-6 border border-[#dddddd] dark:border-gray-700'
             >
-              <div className='flex justify-between items-start mb-4'>
+              <div className='flex justify-between items-start'>
                 <div className='flex-1'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-2'>
+                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-[10px]'>
                     {transcript.videoTitle}
                   </h3>
-                  <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3'>
+
+                  <div className=''>
+                    <p className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-[10px]'>
+                      {truncateText(transcript.text)}
+                    </p>
+                  </div>
+
+                  <div className='flex items-center gap-4 text-sm text-[#aaaaaa] mb-[10px]'>
+                    <span>{formatDate(transcript.createdAt)}</span>
+                    <span className='px-[5px]'>•</span>
                     <span>
                       Duration: {formatDuration(transcript.audioDuration)}
                     </span>
-                    <span>•</span>
-                    <span>Created: {formatDate(transcript.createdAt)}</span>
                   </div>
                   <a
                     href={transcript.videoUrl}
@@ -175,29 +182,28 @@ export default function TranscriptsPage() {
                     rel='noopener noreferrer'
                     className='text-blue-600 dark:text-blue-400 hover:underline text-sm'
                   >
-                    View Original Video ↗
+                    View source
                   </a>
                 </div>
                 <div className='flex gap-2 ml-4'>
-                  <Link
-                    href={`/transcripts/${transcript.id}`}
-                    className='px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors'
-                  >
-                    View
-                  </Link>
                   <button
                     onClick={() => deleteTranscript(transcript.id)}
-                    className='px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors'
+                    className='w-[4rem] py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors mr-[5px] border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
+                  >
+                    <Link
+                      href={`/transcripts/${transcript.id}`}
+                      className='bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors'
+                    >
+                      View
+                    </Link>
+                  </button>
+                  <button
+                    onClick={() => deleteTranscript(transcript.id)}
+                    className='w-[4rem] py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
                   >
                     Delete
                   </button>
                 </div>
-              </div>
-
-              <div className='border-t pt-4 dark:border-gray-600'>
-                <p className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed'>
-                  {truncateText(transcript.text)}
-                </p>
               </div>
             </div>
           ))}

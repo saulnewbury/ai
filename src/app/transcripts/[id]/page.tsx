@@ -135,8 +135,8 @@ export default function TranscriptDetailPage() {
   }
 
   return (
-    <main className='container mx-auto px-4 py-8 max-w-4xl'>
-      <div className='mb-6'>
+    <main className='container mx-auto px-4 py-8 max-w-4xl p-[15px]'>
+      <div className='mb-[10px]'>
         <Link
           href='/transcripts'
           className='text-blue-600 dark:text-blue-400 hover:underline text-sm'
@@ -146,46 +146,48 @@ export default function TranscriptDetailPage() {
       </div>
 
       <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6'>
-        <div className='border-b border-gray-200 dark:border-gray-600 pb-6 mb-6'>
-          <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-4'>
+        <div className='border-b border-gray-200 dark:border-gray-600 pb-[15px] mb-6'>
+          <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-4 mb-[10px]'>
             {transcript.videoTitle}
           </h1>
 
-          <div className='flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4'>
+          <div className='flex flex-wrap items-center gap-4 text-sm text-[#888888] dark:text-gray-400 mb-4 mb-[10px]'>
             <span>Duration: {formatDuration(transcript.audioDuration)}</span>
-            <span>•</span>
+            <span className='px-[5px]'>•</span>
             <span>Transcribed: {formatDate(transcript.createdAt)}</span>
           </div>
 
-          <div className='flex flex-wrap gap-3 mb-4'>
+          <div className='flex justify-between items-center gap-3 mb-4'>
             <a
               href={transcript.videoUrl}
               target='_blank'
               rel='noopener noreferrer'
               className='px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm'
             >
-              Watch Video ↗
+              View source
             </a>
-            <button
-              onClick={copyToClipboard}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                copied
-                  ? 'bg-green-600 text-white'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              {copied ? 'Copied!' : 'Copy Text'}
-            </button>
-            <button
-              onClick={downloadTranscript}
-              className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm'
-            >
-              Download
-            </button>
+            <div>
+              <button
+                onClick={copyToClipboard}
+                className={`px-4 py-2 mr-[5px] rounded-lg text-sm transition-colors cursor-pointer border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px] ${
+                  copied
+                    ? 'bg-green-600 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {copied ? 'Copied!' : 'Copy Text'}
+              </button>
+              <button
+                onClick={downloadTranscript}
+                className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm cursor-pointer border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
+              >
+                Download
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className='prose dark:prose-invert max-w-none'>
+        <div className='prose dark:prose-invert max-w-none pt-[15px]'>
           <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed text-lg'>
             {transcript.text}
           </div>

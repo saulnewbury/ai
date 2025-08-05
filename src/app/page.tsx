@@ -95,41 +95,40 @@ export default function Home() {
 
   return (
     <main className='container mx-auto px-4 py-8 max-w-4xl'>
-      <div className='flex justify-between items-center mb-8'>
+      <div className='flex justify-between items-center mb-8 p-[15px]'>
         <div className='text-center flex-1'>
-          <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-4'>
+          <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-[15px]'>
             YouTube Transcriber
           </h1>
           <p className='text-lg text-gray-600 dark:text-gray-400 mb-2'>
             Enter a YouTube URL to generate a transcript using AssemblyAI
           </p>
           <p className='text-sm text-gray-500 dark:text-gray-500'>
-            ⚡ Works best with videos under 30 minutes • Longer videos may take
-            more time
+            ⚡ Works best with videos under 30 minutes
           </p>
+          <Link
+            href='/transcripts'
+            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
+          >
+            View Saved
+          </Link>
         </div>
-        <Link
-          href='/transcripts'
-          className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
-        >
-          View Saved
-        </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className='mb-8'>
-        <div className='flex gap-4'>
+      <form onSubmit={handleSubmit} className='mb-8 p-[15px]'>
+        <div className='flex gap-4 flex-col'>
           <input
             type='url'
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder='https://www.youtube.com/watch?v=...'
-            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-white'
+            className='h-[50px] rounded-full border-[1px] outline-none px-[15px] mb-[10px]'
             required
           />
           <button
             type='submit'
             disabled={loading}
-            className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            className='h-[50px] rounded-full border-[1px] outline-none px-[15px] cursor-pointer'
           >
             {loading ? 'Transcribing...' : 'Transcribe'}
           </button>
