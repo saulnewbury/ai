@@ -43,37 +43,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create a clean YouTube URL
+    // Create a clean YouTube URL and encode it for the query parameter
     const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`
+    const encodedUrl = encodeURIComponent(cleanUrl)
 
     console.log('Making request to Scrape Creators API...')
 
-    // Make request to Scrape Creators API
-    const scrapeResponse = await fetch(
-      'https://api.scrapecreators.com/v1/youtube/transcript',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.SCRAPE_CREATORS_API_KEY}`,
-          'User-Agent': 'YouTube Transcriber App/1.0'
-        },
-        body: JSON.stringify({
-          url: cleanUrl,
-          format: 'text', // or 'json' if you want timestamps
-          language: 'en' // optional: specify language preference
-        })
+    // Make request to Scrape Creators API using the correct endpoint structure
+    const apiUrl = `https://api.scrapecreators.com/v1/youtube/video/transcript?url=${encodedUrl}`
+
+    const scrapeResponse = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.SCRAPE_CREATORS_API_KEY,
+        'User-Agent': 'YouTube Transcriber App/1.0'
       }
-    )
+    })
 
     if (!scrapeResponse.ok) {
-      const errorData = await scrapeResponse.json().catch(() => ({}))
+      let errorData
+      try {
+        errorData = await scrapeResponse.json()
+      } catch {
+        errorData = {}
+      }
+
+      console.error(
+        'Scrape Creators API error:',
+        scrapeResponse.status,
+        errorData
+      )
 
       if (scrapeResponse.status === 404) {
         return NextResponse.json(
           {
             error:
-              'No captions found for this video. The video may not have captions or they may be disabled.'
+              'No transcript found for this video. The video may not have a transcript available or it may be private.'
           },
           { status: 400 }
         )
@@ -89,6 +94,14 @@ export async function POST(request: NextRequest) {
           { error: 'Rate limit exceeded. Please try again in a few minutes.' },
           { status: 429 }
         )
+      } else if (scrapeResponse.status === 401) {
+        return NextResponse.json(
+          {
+            error:
+              'Invalid API key. Please check your Scrape Creators API configuration.'
+          },
+          { status: 500 }
+        )
       } else if (scrapeResponse.status >= 500) {
         return NextResponse.json(
           {
@@ -101,7 +114,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              errorData.message || 'Failed to extract transcript from video'
+              errorData.message ||
+              errorData.error ||
+              'Failed to extract transcript from video'
           },
           { status: scrapeResponse.status }
         )
@@ -110,48 +125,76 @@ export async function POST(request: NextRequest) {
 
     const data = await scrapeResponse.json()
 
-    console.log('Scrape Creators response received')
+    console.log('Scrape Creators response received:', data)
 
-    // Transform the response to match your expected format
+    // Extract transcript data from the response
     let transcriptText = ''
     let videoTitle = ''
     let audioDuration: number | undefined
 
+    // Handle different possible response structures
     if (data.transcript) {
       if (typeof data.transcript === 'string') {
         transcriptText = data.transcript
       } else if (Array.isArray(data.transcript)) {
-        // If transcript is an array of objects with timestamps
+        // If transcript is an array of segments with text and timestamps
         transcriptText = data.transcript
-          .map((item: any) => item.text || item.content || '')
+          .map((segment: any) => {
+            // Handle different possible segment structures
+            if (typeof segment === 'string') {
+              return segment
+            } else if (segment.text) {
+              return segment.text
+            } else if (segment.content) {
+              return segment.content
+            } else {
+              return ''
+            }
+          })
+          .filter((text) => text.trim().length > 0)
           .join(' ')
           .trim()
-      } else if (data.transcript.text) {
+      } else if (typeof data.transcript === 'object' && data.transcript.text) {
         transcriptText = data.transcript.text
       }
+    } else if (data.text) {
+      transcriptText = data.text
+    } else if (data.content) {
+      transcriptText = data.content
     }
 
-    // Get video metadata if available
+    // Extract video metadata
     if (data.video) {
-      videoTitle = data.video.title || data.title || 'YouTube Video'
-      audioDuration = data.video.duration || data.duration
+      videoTitle = data.video.title || data.video.name || 'YouTube Video'
+      audioDuration = data.video.duration || data.video.length
+    } else if (data.title) {
+      videoTitle = data.title
+    } else if (data.name) {
+      videoTitle = data.name
     } else {
-      videoTitle = data.title || 'YouTube Video'
-      audioDuration = data.duration
+      videoTitle = 'YouTube Video'
+    }
+
+    // Extract duration from various possible locations
+    if (!audioDuration) {
+      audioDuration = data.duration || data.length || data.video_duration
     }
 
     // If no transcript text was extracted
     if (!transcriptText || transcriptText.trim().length === 0) {
+      console.error('No transcript text found in response:', data)
       return NextResponse.json(
         {
           error:
-            'No transcript text could be extracted from this video. The video may not have captions available.'
+            'No transcript text could be extracted from this video. The video may not have a transcript available.'
         },
         { status: 400 }
       )
     }
 
     console.log('Transcript extraction completed successfully')
+    console.log('Transcript length:', transcriptText.length)
+    console.log('Video title:', videoTitle)
 
     return NextResponse.json({
       text: transcriptText.trim(),
@@ -165,7 +208,10 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof Error) {
       // Handle network errors
-      if (error.message.includes('fetch')) {
+      if (
+        error.message.includes('fetch') ||
+        error.message.includes('ENOTFOUND')
+      ) {
         return NextResponse.json(
           {
             error:
