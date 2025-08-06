@@ -130,23 +130,29 @@ export default function TranscriptsPage() {
   }
 
   return (
-    <main className='container mx-auto px-4 py-8 max-w-6xl'>
-      <div className='flex justify-between items-center mb-8 p-[15px]'>
-        <div>
+    <main className='container mx-auto px-4 py-8 max-w-6xl w-[550px]'>
+      <div className='text-right pt-[15px]'>
+        <div className='text-right flex justify-between items-center'>
           <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-2'>
             Saved Transcripts
           </h1>
+          <Link
+            href='/'
+            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-[black]'
+          >
+            <button className='h-[50px] px-[22px] border-none rounded-full text-black cursor-pointer'>
+              New Transcript
+            </button>
+          </Link>
+        </div>
+      </div>
+      <div className='flex justify-between items-center mb-8 p-[15px]'>
+        <div>
           <p className='text-gray-600 dark:text-gray-400'>
             {transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}{' '}
             saved
           </p>
         </div>
-        <Link
-          href='/'
-          className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-[black]'
-        >
-          New Transcript &gt;
-        </Link>
       </div>
 
       {error && (
@@ -186,7 +192,7 @@ export default function TranscriptsPage() {
           </Link>
         </div>
       ) : (
-        <div className='grid gap-[10px] p-[15px]'>
+        <div className='grid gap-[10px] w-full'>
           {transcripts.map((transcript) => (
             <div
               key={transcript.id}
@@ -194,31 +200,33 @@ export default function TranscriptsPage() {
             >
               <div className='flex justify-between items-start'>
                 <div className='flex-1'>
-                  <div className='flex items-center gap-2 mb-2'>
+                  <div className='flex items-center gap-2 mb-[10px]'>
                     <h3 className='text-xl font-semibold text-gray-900 dark:text-white mr-[10px]'>
                       {transcript.videoTitle}
                     </h3>
-                    {getServiceBadge(transcript.serviceUsed)}
                   </div>
-
                   <div className=''>
                     <p className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-[10px]'>
                       {truncateText(transcript.text)}
                     </p>
                   </div>
-
-                  <div className='flex items-center gap-4 text-sm text-[#999999] mb-[10px]'>
+                  <div className='flex items-center gap-4 text-[14px] text-[#999999] mb-[10px]'>
                     <span>{formatDate(transcript.createdAt)}</span>
                     <span className='px-[5px]'>•</span>
                     <span>
                       Duration: {formatDuration(transcript.audioDuration)}
                     </span>
+                    <span className='px-[5px]'>•</span>
+                    <span className=''>
+                      Service: {getServiceBadge(transcript.serviceUsed)}
+                    </span>
                   </div>
+
                   <a
                     href={transcript.videoUrl}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='text-blue-600 dark:text-blue-400 hover:underline text-sm'
+                    className='text-[red] hover:underline text-sm'
                   >
                     Source video
                   </a>

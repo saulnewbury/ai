@@ -210,7 +210,7 @@ export default function Home() {
   ) => {
     if (!hasTimestamps || !text.includes('[')) {
       return (
-        <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
+        <div className='whitespace-pre-wrap text-gray-800 leading-relaxed'>
           {text}
         </div>
       )
@@ -220,7 +220,7 @@ export default function Home() {
     const parts = text.split(/(\[[^\]]+\])/g)
 
     return (
-      <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
+      <div className='whitespace-pre-wrap text-gray-800 leading-relaxed'>
         {parts.map((part, index) => {
           if (part.match(/^\[[^\]]+\]$/)) {
             // This is a timestamp - make it clickable
@@ -247,38 +247,32 @@ export default function Home() {
   }
 
   return (
-    <main className='container mx-auto px-4 py-8 max-w-4xl'>
+    <main className='container mx-auto px-4 py-8 max-w-4xl min-w-[550px]'>
       <div className='text-right pt-[15px]'>
-        <button className='border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px] text-black'>
-          <Link
-            href='/transcripts'
-            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
-          >
-            View Saved
-          </Link>
-        </button>
-      </div>
-      <div className='flex justify-between items-center mb-8 p-[15px]'>
-        <div className='text-center flex-1'>
-          <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-[15px]'>
+        <div className='text-right flex justify-between items-center'>
+          <h1 className='text-4xl font-bold text-gray-900 dark:text-white'>
             YouTube Transcriber
           </h1>
-          <p className='text-lg text-gray-600 dark:text-gray-400 mb-2'>
-            Enter a YouTube URL to generate a transcript
-          </p>
-          <p className='text-sm text-gray-500 dark:text-gray-500'>
-            ⚡ Works best with videos under 30 minutes
-          </p>
+          <div>
+            <Link
+              href='/transcripts'
+              className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4 flex-shrink-0'
+            >
+              <button className='h-[50px] px-[22px] mr-[10px] border-none rounded-full cursor-pointer'>
+                View Saved
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Service Selection */}
-      <div className='mb-6 p-[15px]'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-3'>
-          Choose Transcription Service:
+      <div className='mb-6 py-[15px]'>
+        <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-[10px]'>
+          Services:
         </h3>
-        <div className='flex gap-4 flex-wrap'>
-          <label className='flex items-center cursor-pointer'>
+        <div className='flex flex-col gap-[5px]'>
+          <label className='flex items-center cursor-pointer block'>
             <input
               type='radio'
               name='service'
@@ -287,18 +281,15 @@ export default function Home() {
               onChange={(e) =>
                 setSelectedService(e.target.value as TranscriptService)
               }
-              className='mr-2'
+              className='mr-[5px]'
             />
             <div className='flex flex-col'>
               <span className='font-medium text-gray-900 dark:text-white'>
-                YouTube Direct ⚡
-              </span>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
-                Fastest (~2-3 seconds), extracts existing captions
+                YouTube transcript API ~2-3 seconds
               </span>
             </div>
           </label>
-          <label className='flex items-center cursor-pointer'>
+          <label className='flex items-center cursor-pointer block'>
             <input
               type='radio'
               name='service'
@@ -307,34 +298,11 @@ export default function Home() {
               onChange={(e) =>
                 setSelectedService(e.target.value as TranscriptService)
               }
-              className='mr-2'
+              className='mr-[5px]'
             />
             <div className='flex flex-col'>
               <span className='font-medium text-gray-900 dark:text-white'>
                 AssemblyAI
-              </span>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
-                High accuracy, AI-powered transcription (slower)
-              </span>
-            </div>
-          </label>
-          <label className='flex items-center cursor-pointer'>
-            <input
-              type='radio'
-              name='service'
-              value='scrape_creators'
-              checked={selectedService === 'scrape_creators'}
-              onChange={(e) =>
-                setSelectedService(e.target.value as TranscriptService)
-              }
-              className='mr-2'
-            />
-            <div className='flex flex-col'>
-              <span className='font-medium text-gray-900 dark:text-white'>
-                Scrape Creators
-              </span>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
-                Caption extraction via API (medium speed)
               </span>
             </div>
           </label>
@@ -343,17 +311,17 @@ export default function Home() {
 
       {/* Timestamp Options - Only show for YouTube Direct */}
       {selectedService === 'youtube_direct' && (
-        <div className='mb-6 p-[15px] bg-gray-50 dark:bg-gray-800 rounded-lg'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-3'>
+        <div className='mb-6 py-[15px] bg-gray-50 dark:bg-gray-800 rounded-lg'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-[10px]'>
             Timestamp Options:
           </h3>
           <div className='space-y-3'>
-            <label className='flex items-center cursor-pointer'>
+            <label className='flex items-center cursor-pointer mb-[10px]'>
               <input
                 type='checkbox'
                 checked={includeTimestamps}
                 onChange={(e) => setIncludeTimestamps(e.target.checked)}
-                className='mr-3'
+                className='mr-[5px]'
               />
               <span className='text-gray-900 dark:text-white'>
                 Include timestamps in transcript
@@ -362,10 +330,10 @@ export default function Home() {
 
             {includeTimestamps && (
               <div className='ml-6 space-y-2'>
-                <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-                  Timestamp format:
+                <p className='text-sm text-gray-600 dark:text-gray-400 mb-[5px]'>
+                  Format:
                 </p>
-                <div className='space-y-2'>
+                <div className='space-y-2 flex flex-col gap-[5px]'>
                   <label className='flex items-center cursor-pointer'>
                     <input
                       type='radio'
@@ -375,10 +343,10 @@ export default function Home() {
                       onChange={(e) =>
                         setTimestampFormat(e.target.value as 'seconds')
                       }
-                      className='mr-2'
+                      className='mr-[5px]'
                     />
                     <span className='text-sm text-gray-900 dark:text-white'>
-                      Seconds: [123.4s] Text here
+                      Seconds: [123.4s]
                     </span>
                   </label>
                   <label className='flex items-center cursor-pointer'>
@@ -390,10 +358,10 @@ export default function Home() {
                       onChange={(e) =>
                         setTimestampFormat(e.target.value as 'minutes')
                       }
-                      className='mr-2'
+                      className='mr-[5px]'
                     />
                     <span className='text-sm text-gray-900 dark:text-white'>
-                      Minutes: [02:03.4] Text here
+                      Minutes: [02:03.4]
                     </span>
                   </label>
                   <label className='flex items-center cursor-pointer'>
@@ -405,10 +373,10 @@ export default function Home() {
                       onChange={(e) =>
                         setTimestampFormat(e.target.value as 'timecode')
                       }
-                      className='mr-2'
+                      className='mr-[5px]'
                     />
                     <span className='text-sm text-gray-900 dark:text-white'>
-                      Timecode: [01:02:03.4] Text here
+                      Timecode: [01:02:03.4]
                     </span>
                   </label>
                 </div>
@@ -418,7 +386,7 @@ export default function Home() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className='mb-8 p-[15px]'>
+      <form onSubmit={handleSubmit} className='mb-8 py-[15px]'>
         <div className='flex gap-4 flex-col'>
           <input
             type='url'
