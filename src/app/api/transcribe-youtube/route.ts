@@ -22,7 +22,11 @@ function extractVideoId(url: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json()
+    const {
+      url,
+      include_timestamps = false,
+      timestamp_format = 'seconds'
+    } = await request.json()
 
     if (!url) {
       return NextResponse.json(
@@ -32,6 +36,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Processing URL with Python YouTube Transcript API:', url)
+    console.log('Include timestamps:', include_timestamps)
+    console.log('Timestamp format:', timestamp_format)
 
     // Extract video ID
     const videoId = extractVideoId(url)
@@ -75,7 +81,11 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ url: cleanUrl }),
+        body: JSON.stringify({
+          url: cleanUrl,
+          include_timestamps,
+          timestamp_format
+        }),
         // Add timeout to prevent hanging
         signal: AbortSignal.timeout(30000) // 30 second timeout
       })
@@ -116,19 +126,36 @@ export async function POST(request: NextRequest) {
       const transcriptData = await response.json()
       console.log('Transcript extraction completed successfully')
       console.log('Transcript length:', transcriptData.text.length)
+      console.log('Total segments:', transcriptData.total_segments)
       console.log('Language:', transcriptData.language_code)
       console.log('Auto-generated:', transcriptData.is_generated)
+      console.log('Timestamps included:', include_timestamps)
+      console.log(
+        'First 200 chars of transcript:',
+        transcriptData.text.substring(0, 200)
+      )
 
       // Return in the format expected by your frontend
       return NextResponse.json({
         text: transcriptData.text,
+        segments: transcriptData.segments || null,
         status: 'completed',
-        audio_duration: audioDuration, // Use ytdl duration as fallback
-        video_title: videoTitle, // Use ytdl title as fallback
+        audio_duration: audioDuration || transcriptData.total_duration,
+        video_title: videoTitle,
         service: 'youtube_transcript_api',
         language_code: transcriptData.language_code,
         is_generated: transcriptData.is_generated,
-        video_id: transcriptData.video_id
+        video_id: transcriptData.video_id,
+        total_segments: transcriptData.total_segments,
+        total_duration: transcriptData.total_duration,
+        // Include timestamp info in response for frontend reference
+        include_timestamps: include_timestamps,
+        timestamp_format: timestamp_format,
+        // Add these for debugging
+        has_timestamps: include_timestamps && transcriptData.text.includes('['),
+        raw_segments: transcriptData.segments
+          ? transcriptData.segments.length
+          : 0
       })
     } catch (fetchError) {
       console.error('Error calling Python transcript service:', fetchError)

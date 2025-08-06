@@ -8,7 +8,21 @@ interface TranscriptResult {
   status: string
   audio_duration?: number
   video_title?: string
-  service_used?: 'assemblyai' | 'scrape_creators'
+  service_used?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+  segments?: Array<{
+    text: string
+    start: number
+    duration: number
+    end: number
+    timestamp: string
+  }>
+  total_segments?: number
+  total_duration?: number
+  // Additional timestamp info
+  include_timestamps?: boolean
+  timestamp_format?: string
+  has_timestamps?: boolean
+  raw_segments?: number
 }
 
 type TranscriptService = 'assemblyai' | 'scrape_creators' | 'youtube_direct'
@@ -22,6 +36,10 @@ export default function Home() {
   const [saved, setSaved] = useState(false)
   const [selectedService, setSelectedService] =
     useState<TranscriptService>('youtube_direct')
+  const [includeTimestamps, setIncludeTimestamps] = useState(false)
+  const [timestampFormat, setTimestampFormat] = useState<
+    'seconds' | 'minutes' | 'timecode'
+  >('seconds')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,23 +50,44 @@ export default function Home() {
 
     try {
       let endpoint: string
+      let body: any = { url }
+
       if (selectedService === 'assemblyai') {
         endpoint = '/api/transcribe'
       } else if (selectedService === 'scrape_creators') {
         endpoint = '/api/transcribe-scrape'
       } else {
         endpoint = '/api/transcribe-youtube'
+        // Add timestamp options for YouTube Direct
+        body = {
+          url,
+          include_timestamps: includeTimestamps,
+          timestamp_format: timestampFormat
+        }
       }
+
+      console.log('Submitting with options:', body)
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ url })
+        body: JSON.stringify(body)
       })
 
       const data = await response.json()
+
+      console.log('Raw transcript text preview:', data.text.substring(0, 200))
+      console.log('API Response summary:', {
+        status: data.status,
+        service: data.service,
+        has_timestamps: data.has_timestamps,
+        include_timestamps: data.include_timestamps,
+        timestamp_format: data.timestamp_format,
+        segments: data.segments ? data.segments.length : 0,
+        text_length: data.text.length
+      })
 
       if (!response.ok) {
         // Handle different types of errors
@@ -112,6 +151,41 @@ export default function Home() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Function to render transcript text with better timestamp styling
+  const renderTranscriptText = (text: string, hasTimestamps: boolean) => {
+    if (!hasTimestamps || !text.includes('[')) {
+      return (
+        <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
+          {text}
+        </div>
+      )
+    }
+
+    // Split text by timestamp patterns and style them
+    const parts = text.split(/(\[[^\]]+\])/g)
+
+    return (
+      <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
+        {parts.map((part, index) => {
+          if (part.match(/^\[[^\]]+\]$/)) {
+            // This is a timestamp
+            return (
+              <span
+                key={index}
+                className='inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm font-mono mr-2 mb-1'
+              >
+                {part}
+              </span>
+            )
+          } else {
+            // This is regular text
+            return <span key={index}>{part}</span>
+          }
+        })}
+      </div>
+    )
   }
 
   return (
@@ -209,6 +283,83 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Timestamp Options - Only show for YouTube Direct */}
+      {selectedService === 'youtube_direct' && (
+        <div className='mb-6 p-[15px] bg-gray-50 dark:bg-gray-800 rounded-lg'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-3'>
+            Timestamp Options:
+          </h3>
+          <div className='space-y-3'>
+            <label className='flex items-center cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={includeTimestamps}
+                onChange={(e) => setIncludeTimestamps(e.target.checked)}
+                className='mr-3'
+              />
+              <span className='text-gray-900 dark:text-white'>
+                Include timestamps in transcript
+              </span>
+            </label>
+
+            {includeTimestamps && (
+              <div className='ml-6 space-y-2'>
+                <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
+                  Timestamp format:
+                </p>
+                <div className='space-y-2'>
+                  <label className='flex items-center cursor-pointer'>
+                    <input
+                      type='radio'
+                      name='timestampFormat'
+                      value='seconds'
+                      checked={timestampFormat === 'seconds'}
+                      onChange={(e) =>
+                        setTimestampFormat(e.target.value as 'seconds')
+                      }
+                      className='mr-2'
+                    />
+                    <span className='text-sm text-gray-900 dark:text-white'>
+                      Seconds: [123.4s] Text here
+                    </span>
+                  </label>
+                  <label className='flex items-center cursor-pointer'>
+                    <input
+                      type='radio'
+                      name='timestampFormat'
+                      value='minutes'
+                      checked={timestampFormat === 'minutes'}
+                      onChange={(e) =>
+                        setTimestampFormat(e.target.value as 'minutes')
+                      }
+                      className='mr-2'
+                    />
+                    <span className='text-sm text-gray-900 dark:text-white'>
+                      Minutes: [02:03.4] Text here
+                    </span>
+                  </label>
+                  <label className='flex items-center cursor-pointer'>
+                    <input
+                      type='radio'
+                      name='timestampFormat'
+                      value='timecode'
+                      checked={timestampFormat === 'timecode'}
+                      onChange={(e) =>
+                        setTimestampFormat(e.target.value as 'timecode')
+                      }
+                      className='mr-2'
+                    />
+                    <span className='text-sm text-gray-900 dark:text-white'>
+                      Timecode: [01:02:03.4] Text here
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className='mb-8 p-[15px]'>
         <div className='flex gap-4 flex-col'>
           <input
@@ -273,8 +424,9 @@ export default function Home() {
                   fastest method.
                   <br />
                   <span className='text-xs mt-1 block'>
-                    Note: Only works with videos that have captions/transcripts
-                    available.
+                    {includeTimestamps
+                      ? `Including timestamps in ${timestampFormat} format.`
+                      : 'Only works with videos that have captions/transcripts available.'}
                   </span>
                 </>
               )}
@@ -309,15 +461,36 @@ export default function Home() {
                       : 'YouTube Direct'}
                   </span>
                 </div>
-                <div>
-                  Status:{' '}
-                  <span className='font-medium'>{transcript.status}</span>
+                <div className='flex flex-wrap gap-4 text-xs'>
+                  <span>
+                    Status:{' '}
+                    <span className='font-medium'>{transcript.status}</span>
+                  </span>
                   {transcript.audio_duration && (
-                    <span className='ml-4 block'>
+                    <span>
                       Duration: {Math.round(transcript.audio_duration / 60)}{' '}
                       minutes
                     </span>
                   )}
+                  {transcript.total_segments && (
+                    <span>Segments: {transcript.total_segments}</span>
+                  )}
+                  {transcript.include_timestamps &&
+                    selectedService === 'youtube_direct' && (
+                      <span>
+                        <span
+                          className={`px-1 py-0.5 rounded text-xs ${
+                            transcript.has_timestamps
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}
+                        >
+                          {transcript.has_timestamps
+                            ? `✓ ${transcript.timestamp_format} timestamps`
+                            : '⚠ No timestamps detected'}
+                        </span>
+                      </span>
+                    )}
                 </div>
               </div>
             </div>
@@ -338,9 +511,10 @@ export default function Home() {
             </div>
           </div>
           <div className='prose dark:prose-invert max-w-none'>
-            <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
-              {transcript.text}
-            </div>
+            {renderTranscriptText(
+              transcript.text,
+              transcript.has_timestamps || false
+            )}
           </div>
         </div>
       )}
