@@ -141,7 +141,19 @@ export default function TranscriptDetailPage() {
             // This is a timestamp - make it clickable with pill styling
             const timestampUrl = createTimestampUrl(part, videoUrl)
             // Remove the square brackets for display
-            const displayTime = part.replace(/[\[\]]/g, '')
+            let displayTime = part.replace(/[\[\]]/g, '')
+
+            // Format display time to remove floating point seconds
+            if (displayTime.includes('s') && displayTime.includes('.')) {
+              // Format: "123.4s" -> "123s"
+              displayTime = displayTime.replace(/(\d+)\.\d+s/, '$1s')
+            } else if (displayTime.includes(':') && displayTime.includes('.')) {
+              // Format: "02:03.4" -> "02:03" or "01:02:03.4" -> "01:02:03"
+              displayTime = displayTime
+                .replace(/(\d+):(\d+):(\d+)\.\d+/, '$1:$2:$3')
+                .replace(/(\d+):(\d+)\.\d+/, '$1:$2')
+            }
+
             return (
               <a
                 key={index}

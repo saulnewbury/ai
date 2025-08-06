@@ -330,9 +330,6 @@ export default function Home() {
 
             {includeTimestamps && (
               <div className='ml-6 space-y-2'>
-                <p className='text-sm text-gray-600 dark:text-gray-400 mb-[5px]'>
-                  Format:
-                </p>
                 <div className='space-y-2 flex flex-col gap-[5px]'>
                   <label className='flex items-center cursor-pointer'>
                     <input
