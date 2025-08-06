@@ -8,7 +8,7 @@ interface TranscriptResult {
   status: string
   audio_duration?: number
   video_title?: string
-  service_used?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+  service_used?: 'assemblyai' | 'youtube_direct'
   segments?: Array<{
     text: string
     start: number
@@ -25,7 +25,7 @@ interface TranscriptResult {
   raw_segments?: number
 }
 
-type TranscriptService = 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+type TranscriptService = 'assemblyai' | 'youtube_direct'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -54,8 +54,6 @@ export default function Home() {
 
       if (selectedService === 'assemblyai') {
         endpoint = '/api/transcribe'
-      } else if (selectedService === 'scrape_creators') {
-        endpoint = '/api/transcribe-scrape'
       } else {
         endpoint = '/api/transcribe-youtube'
         // Add timestamp options for YouTube Direct
@@ -100,11 +98,7 @@ export default function Home() {
         // Handle different types of errors
         if (response.status === 503) {
           const serviceName =
-            selectedService === 'assemblyai'
-              ? 'AssemblyAI'
-              : selectedService === 'scrape_creators'
-              ? 'Scrape Creators'
-              : 'YouTube Direct'
+            selectedService === 'assemblyai' ? 'AssemblyAI' : 'YouTube Direct'
           throw new Error(
             `${serviceName} service is temporarily unavailable. Please try again in a few minutes.`
           )
@@ -402,8 +396,6 @@ export default function Home() {
               ? `Transcribing with ${
                   selectedService === 'assemblyai'
                     ? 'AssemblyAI'
-                    : selectedService === 'scrape_creators'
-                    ? 'Scrape Creators'
                     : 'YouTube Direct'
                 }...`
               : 'Transcribe'}
@@ -430,15 +422,6 @@ export default function Home() {
                   <span className='text-xs mt-1 block'>
                     The app automatically selects lower quality audio for longer
                     videos to ensure processing.
-                  </span>
-                </>
-              ) : selectedService === 'scrape_creators' ? (
-                <>
-                  Extracting transcript with Scrape Creators... This usually
-                  takes 10-20 seconds.
-                  <br />
-                  <span className='text-xs mt-1 block'>
-                    Note: This method requires existing captions on the video.
                   </span>
                 </>
               ) : (
@@ -472,15 +455,11 @@ export default function Home() {
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       transcript.service_used === 'assemblyai'
                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                        : transcript.service_used === 'scrape_creators'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                         : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                     }`}
                   >
                     {transcript.service_used === 'assemblyai'
                       ? 'AssemblyAI'
-                      : transcript.service_used === 'scrape_creators'
-                      ? 'Scrape Creators'
                       : 'YouTube Direct'}
                   </span>
                 </div>

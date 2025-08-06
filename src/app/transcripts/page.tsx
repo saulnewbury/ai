@@ -93,11 +93,6 @@ export default function TranscriptsPage() {
         className:
           'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       },
-      scrape_creators: {
-        label: 'Scrape Creators',
-        className:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-      },
       youtube_direct: {
         label: 'YouTube Direct',
         className:

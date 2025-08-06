@@ -12,7 +12,7 @@ interface SavedTranscript {
   audioDuration?: number
   createdAt: string
   updatedAt: string
-  serviceUsed?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+  serviceUsed?: 'assemblyai' | 'youtube_direct'
 }
 
 export default function TranscriptDetailPage() {
@@ -63,8 +63,6 @@ export default function TranscriptDetailPage() {
       ? `\nService: ${
           transcript.serviceUsed === 'assemblyai'
             ? 'AssemblyAI'
-            : transcript.serviceUsed === 'scrape_creators'
-            ? 'Scrape Creators'
             : 'YouTube Direct'
         }`
       : ''
@@ -211,12 +209,6 @@ export default function TranscriptDetailPage() {
         className:
           'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
         description: 'AI-powered transcription'
-      },
-      scrape_creators: {
-        label: 'Scrape Creators',
-        className:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-        description: 'Caption extraction via API'
       },
       youtube_direct: {
         label: 'YouTube Direct',
