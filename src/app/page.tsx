@@ -66,7 +66,9 @@ export default function Home() {
         }
       }
 
-      console.log('Submitting with options:', body)
+      console.log('Making request to:', endpoint)
+      console.log('Request body:', body)
+      console.log('Selected service:', selectedService)
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -78,7 +80,11 @@ export default function Home() {
 
       const data = await response.json()
 
-      console.log('Raw transcript text preview:', data.text.substring(0, 200))
+      console.log('Full API Response:', data)
+      console.log(
+        'Raw transcript text preview:',
+        data.text ? data.text.substring(0, 200) : 'NO TEXT FOUND'
+      )
       console.log('API Response summary:', {
         status: data.status,
         service: data.service,
@@ -86,7 +92,8 @@ export default function Home() {
         include_timestamps: data.include_timestamps,
         timestamp_format: data.timestamp_format,
         segments: data.segments ? data.segments.length : 0,
-        text_length: data.text.length
+        text_length: data.text ? data.text.length : 0,
+        text_exists: !!data.text
       })
 
       if (!response.ok) {
@@ -106,6 +113,14 @@ export default function Home() {
         } else {
           throw new Error(data.error || 'Failed to transcribe video')
         }
+      }
+
+      // Validate that we have transcript text
+      if (!data.text) {
+        console.error('No transcript text in response:', data)
+        throw new Error(
+          'No transcript text received from the service. The video may not have captions available.'
+        )
       }
 
       setTranscript({ ...data, service_used: selectedService })
@@ -153,8 +168,46 @@ export default function Home() {
     }
   }
 
-  // Function to render transcript text with better timestamp styling
-  const renderTranscriptText = (text: string, hasTimestamps: boolean) => {
+  // Function to convert timestamp to seconds for URL
+  const parseTimestamp = (timestamp: string): number => {
+    // Remove brackets and extract the time part
+    const timeStr = timestamp.replace(/[\[\]]/g, '')
+
+    if (timeStr.includes('s')) {
+      // Format: "123.4s"
+      return parseFloat(timeStr.replace('s', ''))
+    } else if (timeStr.includes(':')) {
+      // Format: "02:03.4" or "01:02:03.4"
+      const parts = timeStr.split(':')
+      if (parts.length === 2) {
+        // MM:SS.s format
+        const [minutes, seconds] = parts
+        return parseInt(minutes) * 60 + parseFloat(seconds)
+      } else if (parts.length === 3) {
+        // HH:MM:SS.s format
+        const [hours, minutes, seconds] = parts
+        return (
+          parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds)
+        )
+      }
+    }
+    return 0
+  }
+
+  // Function to create YouTube URL with timestamp
+  const createTimestampUrl = (timestamp: string, baseUrl: string): string => {
+    const seconds = Math.floor(parseTimestamp(timestamp))
+    const url = new URL(baseUrl)
+    url.searchParams.set('t', `${seconds}s`)
+    return url.toString()
+  }
+
+  // Function to render transcript text with clickable timestamp links
+  const renderTranscriptText = (
+    text: string,
+    hasTimestamps: boolean,
+    videoUrl: string
+  ) => {
     if (!hasTimestamps || !text.includes('[')) {
       return (
         <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
@@ -170,14 +223,19 @@ export default function Home() {
       <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
         {parts.map((part, index) => {
           if (part.match(/^\[[^\]]+\]$/)) {
-            // This is a timestamp
+            // This is a timestamp - make it clickable
+            const timestampUrl = createTimestampUrl(part, videoUrl)
             return (
-              <span
+              <a
                 key={index}
-                className='inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm font-mono mr-2 mb-1'
+                href={timestampUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 px-2 py-1 rounded text-sm font-mono mr-2 mb-1 cursor-pointer transition-colors duration-200 no-underline hover:shadow-sm'
+                title={`Jump to ${part} in video`}
               >
                 {part}
-              </span>
+              </a>
             )
           } else {
             // This is regular text
@@ -513,7 +571,8 @@ export default function Home() {
           <div className='prose dark:prose-invert max-w-none'>
             {renderTranscriptText(
               transcript.text,
-              transcript.has_timestamps || false
+              transcript.has_timestamps || false,
+              url
             )}
           </div>
         </div>

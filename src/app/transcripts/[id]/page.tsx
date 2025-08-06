@@ -63,7 +63,9 @@ export default function TranscriptDetailPage() {
       ? `\nService: ${
           transcript.serviceUsed === 'assemblyai'
             ? 'AssemblyAI'
-            : 'Scrape Creators'
+            : transcript.serviceUsed === 'scrape_creators'
+            ? 'Scrape Creators'
+            : 'YouTube Direct'
         }`
       : ''
     const content = `Title: ${transcript.videoTitle}\nURL: ${
@@ -82,6 +84,81 @@ export default function TranscriptDetailPage() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  // Function to convert timestamp to seconds for URL
+  const parseTimestamp = (timestamp: string): number => {
+    // Remove brackets and extract the time part
+    const timeStr = timestamp.replace(/[\[\]]/g, '')
+
+    if (timeStr.includes('s')) {
+      // Format: "123.4s"
+      return parseFloat(timeStr.replace('s', ''))
+    } else if (timeStr.includes(':')) {
+      // Format: "02:03.4" or "01:02:03.4"
+      const parts = timeStr.split(':')
+      if (parts.length === 2) {
+        // MM:SS.s format
+        const [minutes, seconds] = parts
+        return parseInt(minutes) * 60 + parseFloat(seconds)
+      } else if (parts.length === 3) {
+        // HH:MM:SS.s format
+        const [hours, minutes, seconds] = parts
+        return (
+          parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds)
+        )
+      }
+    }
+    return 0
+  }
+
+  // Function to create YouTube URL with timestamp
+  const createTimestampUrl = (timestamp: string, baseUrl: string): string => {
+    const seconds = Math.floor(parseTimestamp(timestamp))
+    const url = new URL(baseUrl)
+    url.searchParams.set('t', `${seconds}s`)
+    return url.toString()
+  }
+
+  // Function to render transcript text with clickable timestamp links
+  const renderTranscriptText = (text: string, videoUrl: string) => {
+    // Check if text contains timestamps
+    if (!text.includes('[')) {
+      return (
+        <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed text-lg'>
+          {text}
+        </div>
+      )
+    }
+
+    // Split text by timestamp patterns and style them
+    const parts = text.split(/(\[[^\]]+\])/g)
+
+    return (
+      <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed text-lg'>
+        {parts.map((part, index) => {
+          if (part.match(/^\[[^\]]+\]$/)) {
+            // This is a timestamp - make it clickable
+            const timestampUrl = createTimestampUrl(part, videoUrl)
+            return (
+              <a
+                key={index}
+                href={timestampUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 px-3 py-1.5 rounded-md text-sm font-mono mr-2 mb-1 cursor-pointer transition-colors duration-200 no-underline hover:shadow-md border border-blue-200 dark:border-blue-700'
+                title={`Jump to ${part} in video - opens in new tab`}
+              >
+                🔗 {part}
+              </a>
+            )
+          } else {
+            // This is regular text
+            return <span key={index}>{part}</span>
+          }
+        })}
+      </div>
+    )
   }
 
   const formatDate = (dateString: string) => {
@@ -184,6 +261,8 @@ export default function TranscriptDetailPage() {
     )
   }
 
+  const hasTimestamps = transcript.text.includes('[')
+
   return (
     <main className='container mx-auto px-4 py-8 max-w-4xl p-[15px]'>
       <div className='mb-[10px]'>
@@ -207,6 +286,14 @@ export default function TranscriptDetailPage() {
             <span>Duration: {formatDuration(transcript.audioDuration)}</span>
             <span className='px-[5px]'>•</span>
             <span>Transcribed: {formatDate(transcript.createdAt)}</span>
+            {hasTimestamps && (
+              <>
+                <span className='px-[5px]'>•</span>
+                <span className='bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded text-xs'>
+                  ⏱️ Clickable timestamps
+                </span>
+              </>
+            )}
           </div>
 
           <div className='flex justify-between items-center gap-3 mb-4'>
@@ -216,7 +303,7 @@ export default function TranscriptDetailPage() {
               rel='noopener noreferrer'
               className='px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm'
             >
-              Source video
+              📺 Watch Original Video
             </a>
             <div>
               <button
@@ -227,22 +314,31 @@ export default function TranscriptDetailPage() {
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
-                {copied ? 'Copied!' : 'Copy Text'}
+                {copied ? 'Copied!' : '📋 Copy Text'}
               </button>
               <button
                 onClick={downloadTranscript}
                 className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm cursor-pointer border-[#dddddd] border-[1px] rounded-full px-[14px] py-[4px]'
               >
-                Download
+                💾 Download
               </button>
             </div>
           </div>
+
+          {hasTimestamps && (
+            <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4'>
+              <div className='flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200'>
+                <span className='text-blue-600'>ℹ️</span>
+                <span>
+                  Click on any timestamp to jump to that moment in the video
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className='prose dark:prose-invert max-w-none pt-[15px]'>
-          <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed text-lg'>
-            {transcript.text}
-          </div>
+          {renderTranscriptText(transcript.text, transcript.videoUrl)}
         </div>
       </div>
     </main>
