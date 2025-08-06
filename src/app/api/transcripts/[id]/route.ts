@@ -3,10 +3,11 @@ import { transcriptStore } from '@/lib/transcript-store'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // Explicitly type params as a Promise
 ) {
   try {
-    const transcript = transcriptStore.getById(params.id)
+    const { id } = await context.params // Await the params to resolve the Promise
+    const transcript = transcriptStore.getById(id)
 
     if (!transcript) {
       return NextResponse.json(
