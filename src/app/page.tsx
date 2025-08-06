@@ -11,7 +11,7 @@ interface TranscriptResult {
   service_used?: 'assemblyai' | 'scrape_creators'
 }
 
-type TranscriptService = 'assemblyai' | 'scrape_creators'
+type TranscriptService = 'assemblyai' | 'scrape_creators' | 'youtube_direct'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -21,7 +21,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [selectedService, setSelectedService] =
-    useState<TranscriptService>('assemblyai')
+    useState<TranscriptService>('youtube_direct')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,10 +31,14 @@ export default function Home() {
     setSaved(false)
 
     try {
-      const endpoint =
-        selectedService === 'assemblyai'
-          ? '/api/transcribe'
-          : '/api/transcribe-scrape'
+      let endpoint: string
+      if (selectedService === 'assemblyai') {
+        endpoint = '/api/transcribe'
+      } else if (selectedService === 'scrape_creators') {
+        endpoint = '/api/transcribe-scrape'
+      } else {
+        endpoint = '/api/transcribe-youtube'
+      }
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -49,12 +53,14 @@ export default function Home() {
       if (!response.ok) {
         // Handle different types of errors
         if (response.status === 503) {
+          const serviceName =
+            selectedService === 'assemblyai'
+              ? 'AssemblyAI'
+              : selectedService === 'scrape_creators'
+              ? 'Scrape Creators'
+              : 'YouTube Direct'
           throw new Error(
-            `${
-              selectedService === 'assemblyai'
-                ? 'AssemblyAI'
-                : 'Scrape Creators'
-            } service is temporarily unavailable. Please try again in a few minutes.`
+            `${serviceName} service is temporarily unavailable. Please try again in a few minutes.`
           )
         } else if (response.status >= 500) {
           throw new Error('Server error occurred. Please try again.')
@@ -122,13 +128,13 @@ export default function Home() {
       </div>
       <div className='flex justify-between items-center mb-8 p-[15px]'>
         <div className='text-center flex-1'>
-          <h1 className='text-4xl font-bold text-gray-900  mb-[15px]'>
+          <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-[15px]'>
             YouTube Transcriber
           </h1>
-          <p className='text-lg text-gray-600  mb-2'>
+          <p className='text-lg text-gray-600 dark:text-gray-400 mb-2'>
             Enter a YouTube URL to generate a transcript
           </p>
-          <p className='text-sm text-gray-500 '>
+          <p className='text-sm text-gray-500 dark:text-gray-500'>
             ⚡ Works best with videos under 30 minutes
           </p>
         </div>
@@ -136,10 +142,30 @@ export default function Home() {
 
       {/* Service Selection */}
       <div className='mb-6 p-[15px]'>
-        <h3 className='text-lg font-semibold text-gray-900 mb-3'>
+        <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-3'>
           Choose Transcription Service:
         </h3>
-        <div className='flex gap-4'>
+        <div className='flex gap-4 flex-wrap'>
+          <label className='flex items-center cursor-pointer'>
+            <input
+              type='radio'
+              name='service'
+              value='youtube_direct'
+              checked={selectedService === 'youtube_direct'}
+              onChange={(e) =>
+                setSelectedService(e.target.value as TranscriptService)
+              }
+              className='mr-2'
+            />
+            <div className='flex flex-col'>
+              <span className='font-medium text-gray-900 dark:text-white'>
+                YouTube Direct ⚡
+              </span>
+              <span className='text-sm text-gray-600 dark:text-gray-400'>
+                Fastest (~2-3 seconds), extracts existing captions
+              </span>
+            </div>
+          </label>
           <label className='flex items-center cursor-pointer'>
             <input
               type='radio'
@@ -152,9 +178,11 @@ export default function Home() {
               className='mr-2'
             />
             <div className='flex flex-col'>
-              <span className='font-medium text-gray-900'>AssemblyAI</span>
-              <span className='text-sm text-gray-600'>
-                High accuracy, AI-powered transcription
+              <span className='font-medium text-gray-900 dark:text-white'>
+                AssemblyAI
+              </span>
+              <span className='text-sm text-gray-600 dark:text-gray-400'>
+                High accuracy, AI-powered transcription (slower)
               </span>
             </div>
           </label>
@@ -170,9 +198,11 @@ export default function Home() {
               className='mr-2'
             />
             <div className='flex flex-col'>
-              <span className='font-medium text-gray-900'>Scrape Creators</span>
-              <span className='text-sm text-gray-600'>
-                Fast extraction from existing captions
+              <span className='font-medium text-gray-900 dark:text-white'>
+                Scrape Creators
+              </span>
+              <span className='text-sm text-gray-600 dark:text-gray-400'>
+                Caption extraction via API (medium speed)
               </span>
             </div>
           </label>
@@ -198,7 +228,9 @@ export default function Home() {
               ? `Transcribing with ${
                   selectedService === 'assemblyai'
                     ? 'AssemblyAI'
-                    : 'Scrape Creators'
+                    : selectedService === 'scrape_creators'
+                    ? 'Scrape Creators'
+                    : 'YouTube Direct'
                 }...`
               : 'Transcribe'}
           </button>
@@ -206,13 +238,13 @@ export default function Home() {
       </form>
 
       {error && (
-        <div className='mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg'>
+        <div className='mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-600 dark:text-red-200'>
           {error}
         </div>
       )}
 
       {loading && (
-        <div className='mb-6 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg'>
+        <div className='mb-6 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg dark:bg-blue-900 dark:border-blue-600 dark:text-blue-200'>
           <div className='flex items-center'>
             <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2'></div>
             <div>
@@ -226,13 +258,23 @@ export default function Home() {
                     videos to ensure processing.
                   </span>
                 </>
-              ) : (
+              ) : selectedService === 'scrape_creators' ? (
                 <>
-                  Extracting transcript with Scrape Creators... This is usually
-                  faster than AI transcription.
+                  Extracting transcript with Scrape Creators... This usually
+                  takes 10-20 seconds.
                   <br />
                   <span className='text-xs mt-1 block'>
                     Note: This method requires existing captions on the video.
+                  </span>
+                </>
+              ) : (
+                <>
+                  Extracting transcript directly from YouTube... This is the
+                  fastest method.
+                  <br />
+                  <span className='text-xs mt-1 block'>
+                    Note: Only works with videos that have captions/transcripts
+                    available.
                   </span>
                 </>
               )}
@@ -242,25 +284,29 @@ export default function Home() {
       )}
 
       {transcript && (
-        <div className='bg-white rounded-lg shadow-lg p-6 p-[15px]'>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 p-[15px]'>
           <div className='flex flex-col-reverse justify-between items-start mb-4'>
             <div className='flex-1'>
-              <h2 className='text-2xl font-semibold text-gray-900  mb-[10px]'>
+              <h2 className='text-2xl font-semibold text-gray-900 dark:text-white mb-[10px]'>
                 {transcript.video_title || 'Transcript'}
               </h2>
-              <div className='text-sm text-gray-600 mb-[15px]'>
+              <div className='text-sm text-gray-600 dark:text-gray-400 mb-[15px]'>
                 <div className='flex items-center gap-2 mb-2'>
                   <span className='font-medium'>Service:</span>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       transcript.service_used === 'assemblyai'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        : transcript.service_used === 'scrape_creators'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                     }`}
                   >
                     {transcript.service_used === 'assemblyai'
                       ? 'AssemblyAI'
-                      : 'Scrape Creators'}
+                      : transcript.service_used === 'scrape_creators'
+                      ? 'Scrape Creators'
+                      : 'YouTube Direct'}
                   </span>
                 </div>
                 <div>
@@ -291,8 +337,8 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <div className='prose max-w-none'>
-            <div className='whitespace-pre-wrap text-gray-800 leading-relaxed'>
+          <div className='prose dark:prose-invert max-w-none'>
+            <div className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed'>
               {transcript.text}
             </div>
           </div>

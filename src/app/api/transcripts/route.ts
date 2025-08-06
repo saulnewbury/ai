@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       videoUrl,
       text,
       audioDuration,
-      serviceUsed: serviceUsed || 'assemblyai' // default to assemblyai for backward compatibility
+      serviceUsed: serviceUsed || 'youtube_direct' // default to youtube_direct for backward compatibility
     })
 
     return NextResponse.json(savedTranscript, { status: 201 })

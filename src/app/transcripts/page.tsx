@@ -11,7 +11,7 @@ interface SavedTranscript {
   audioDuration?: number
   createdAt: string
   updatedAt: string
-  serviceUsed?: 'assemblyai' | 'scrape_creators'
+  serviceUsed?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
 }
 
 export default function TranscriptsPage() {
@@ -82,7 +82,9 @@ export default function TranscriptsPage() {
     return text.substring(0, maxLength) + '...'
   }
 
-  const getServiceBadge = (service?: 'assemblyai' | 'scrape_creators') => {
+  const getServiceBadge = (
+    service?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+  ) => {
     if (!service) return null
 
     const serviceConfig = {
@@ -95,6 +97,11 @@ export default function TranscriptsPage() {
         label: 'Scrape Creators',
         className:
           'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      },
+      youtube_direct: {
+        label: 'YouTube Direct',
+        className:
+          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
       }
     }
 

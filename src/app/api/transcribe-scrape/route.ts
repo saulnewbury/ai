@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import ytdl from '@distube/ytdl-core'
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,18 +48,73 @@ export async function POST(request: NextRequest) {
     const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`
     const encodedUrl = encodeURIComponent(cleanUrl)
 
+    // Get video info using ytdl for consistent title extraction
+    let fallbackTitle = 'YouTube Video'
+    let fallbackDuration: number | undefined
+
+    try {
+      console.log('Getting video info with ytdl...')
+      if (ytdl.validateURL(cleanUrl)) {
+        const info = await ytdl.getInfo(cleanUrl)
+        fallbackTitle = info.videoDetails.title
+        fallbackDuration = parseInt(info.videoDetails.lengthSeconds || '0')
+        console.log(`Video title from ytdl: ${fallbackTitle}`)
+        console.log(`Video duration from ytdl: ${fallbackDuration} seconds`)
+      }
+    } catch (ytdlError) {
+      console.warn('Could not get video info from ytdl:', ytdlError)
+      // Continue with Scrape Creators - this is just for fallback title
+    }
+
     console.log('Making request to Scrape Creators API...')
 
     // Make request to Scrape Creators API using the correct endpoint structure
     const apiUrl = `https://api.scrapecreators.com/v1/youtube/video/transcript?url=${encodedUrl}`
+    console.log('API URL:', apiUrl)
+    console.log(
+      'Using API key:',
+      process.env.SCRAPE_CREATORS_API_KEY?.substring(0, 8) + '...'
+    )
 
-    const scrapeResponse = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'x-api-key': process.env.SCRAPE_CREATORS_API_KEY,
-        'User-Agent': 'YouTube Transcriber App/1.0'
+    // Create an AbortController for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+    let scrapeResponse
+    try {
+      scrapeResponse = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'x-api-key': process.env.SCRAPE_CREATORS_API_KEY,
+          'User-Agent': 'YouTube Transcriber App/1.0',
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+      console.log('Scrape Creators API response status:', scrapeResponse.status)
+      console.log(
+        'Scrape Creators API response headers:',
+        Object.fromEntries(scrapeResponse.headers.entries())
+      )
+    } catch (fetchError) {
+      clearTimeout(timeoutId)
+      console.error('Fetch error:', fetchError)
+
+      if (fetchError.name === 'AbortError') {
+        return NextResponse.json(
+          {
+            error:
+              'Request timed out. The Scrape Creators service is taking too long to respond.'
+          },
+          { status: 504 }
+        )
       }
-    })
+
+      throw fetchError
+    }
 
     if (!scrapeResponse.ok) {
       let errorData
@@ -163,21 +219,28 @@ export async function POST(request: NextRequest) {
       transcriptText = data.content
     }
 
-    // Extract video metadata
+    // Extract video metadata with fallback to ytdl data
     if (data.video) {
-      videoTitle = data.video.title || data.video.name || 'YouTube Video'
-      audioDuration = data.video.duration || data.video.length
+      videoTitle = data.video.title || data.video.name || fallbackTitle
+      audioDuration =
+        data.video.duration || data.video.length || fallbackDuration
     } else if (data.title) {
       videoTitle = data.title
+      audioDuration =
+        data.duration || data.length || data.video_duration || fallbackDuration
     } else if (data.name) {
       videoTitle = data.name
+      audioDuration =
+        data.duration || data.length || data.video_duration || fallbackDuration
     } else {
-      videoTitle = 'YouTube Video'
+      videoTitle = fallbackTitle
+      audioDuration = fallbackDuration
     }
 
-    // Extract duration from various possible locations
+    // Extract duration from various possible locations with fallback
     if (!audioDuration) {
-      audioDuration = data.duration || data.length || data.video_duration
+      audioDuration =
+        data.duration || data.length || data.video_duration || fallbackDuration
     }
 
     // If no transcript text was extracted
