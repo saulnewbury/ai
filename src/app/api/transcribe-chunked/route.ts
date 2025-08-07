@@ -1,4 +1,4 @@
-// app/api/transcribe-chunked/route.ts
+// app/api/transcribe-chunked/route.ts - Fixed version
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🚀 Processing URL with chunking service:', url)
+    console.log('🚀 Processing URL with optimized chunking service:', url)
 
-    // Call the chunking microservice
+    // Call the optimized chunking microservice
     const chunkingServiceUrl =
       process.env.CHUNKING_SERVICE_URL || 'http://localhost:8002'
     const transcriptUrl = `${chunkingServiceUrl}/transcribe-chunked`
 
-    console.log('Calling chunking service at:', transcriptUrl)
+    console.log('Calling optimized chunking service at:', transcriptUrl)
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minute timeout
@@ -83,23 +83,50 @@ export async function POST(request: NextRequest) {
       }
 
       const transcriptData = await response.json()
-      console.log('✅ Chunked transcription completed successfully!')
+
+      // Add detailed logging to debug the response
+      console.log(
+        '✅ Raw response from chunking service:',
+        JSON.stringify(transcriptData, null, 2)
+      )
+      console.log('🔍 Response fields check:', {
+        has_text: !!transcriptData.text,
+        text_length: transcriptData.text ? transcriptData.text.length : 0,
+        status: transcriptData.status,
+        video_title: transcriptData.video_title,
+        service_method: transcriptData.service_method
+      })
+
+      // Validate that we have the essential fields
+      if (!transcriptData.text) {
+        console.error('❌ No text field in response from chunking service')
+        return NextResponse.json(
+          { error: 'No transcript text received from chunking service' },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Optimized transcription completed successfully!')
       console.log(
         `⚡ Processing time: ${transcriptData.processing_time?.toFixed(2)}s`
       )
-      console.log(`📦 Total chunks: ${transcriptData.total_chunks}`)
-      console.log(
-        `🎬 Video duration: ${Math.round(transcriptData.total_duration / 60)}m`
-      )
+      console.log(`📦 Service method: ${transcriptData.service_method}`)
+      if (transcriptData.total_chunks) {
+        console.log(`🔀 Total chunks: ${transcriptData.total_chunks}`)
+      }
 
-      return NextResponse.json({
+      // Format response to match frontend expectations
+      const formattedResponse = {
         text: transcriptData.text,
         status: transcriptData.status,
-        audio_duration: transcriptData.total_duration,
+        audio_duration:
+          transcriptData.audio_duration || transcriptData.total_duration,
         video_title: transcriptData.video_title,
         service_used: 'assemblyai_chunked',
         processing_time: transcriptData.processing_time,
         total_chunks: transcriptData.total_chunks,
+        service_method: transcriptData.service_method,
+        timing_breakdown: transcriptData.timing_breakdown,
         chunks_info: transcriptData.chunks?.map((chunk) => ({
           chunk_id: chunk.chunk_id,
           status: chunk.status,
@@ -108,7 +135,10 @@ export async function POST(request: NextRequest) {
           end_time: chunk.end_time,
           success: chunk.status === 'completed'
         }))
-      })
+      }
+
+      console.log('📤 Sending formatted response to frontend')
+      return NextResponse.json(formattedResponse)
     } catch (fetchError: any) {
       clearTimeout(timeoutId)
       console.error('❌ Error calling chunking service:', fetchError)
@@ -124,19 +154,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "Chunking service is not available. Make sure it's running on port 8002."
+              "Optimized chunking service is not available. Make sure it's running on port 8002."
           },
           { status: 503 }
         )
       }
 
       return NextResponse.json(
-        { error: 'Failed to connect to chunking service.' },
+        { error: 'Failed to connect to optimized chunking service.' },
         { status: 500 }
       )
     }
   } catch (error) {
-    console.error('❌ Chunking API error:', error)
+    console.error('❌ Chunked API error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred while processing the transcript' },
       { status: 500 }

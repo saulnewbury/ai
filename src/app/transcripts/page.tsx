@@ -11,7 +11,7 @@ interface SavedTranscript {
   audioDuration?: number
   createdAt: string
   updatedAt: string
-  serviceUsed?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+  serviceUsed?: 'assemblyai' | 'assemblyai_chunked' | 'youtube_direct'
 }
 
 export default function TranscriptsPage() {
@@ -83,7 +83,7 @@ export default function TranscriptsPage() {
   }
 
   const getServiceBadge = (
-    service?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+    service?: 'assemblyai' | 'assemblyai_chunked' | 'youtube_direct'
   ) => {
     if (!service) return null
 
@@ -93,14 +93,28 @@ export default function TranscriptsPage() {
         className:
           'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       },
+      assemblyai_chunked: {
+        label: 'AssemblyAI Chunked',
+        className:
+          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      },
       youtube_direct: {
         label: 'YouTube Direct',
         className:
-          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
       }
     }
 
     const config = serviceConfig[service]
+
+    // Add safety check to prevent undefined access
+    if (!config) {
+      return (
+        <span className='px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'>
+          {service || 'Unknown'}
+        </span>
+      )
+    }
 
     return (
       <span
