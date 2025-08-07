@@ -199,7 +199,7 @@ export default function TranscriptDetailPage() {
   }
 
   const getServiceBadge = (
-    service?: 'assemblyai' | 'scrape_creators' | 'youtube_direct'
+    service?: 'assemblyai' | 'assemblyai_chunked' | 'youtube_direct'
   ) => {
     if (!service) return null
 
@@ -210,10 +210,16 @@ export default function TranscriptDetailPage() {
           'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
         description: 'AI-powered transcription'
       },
+      assemblyai_chunked: {
+        label: 'AssemblyAI Chunked',
+        className:
+          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+        description: 'Parallel processing with chunks'
+      },
       youtube_direct: {
         label: 'YouTube Direct',
         className:
-          'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
         description: 'Direct caption extraction'
       }
     }

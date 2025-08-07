@@ -8,7 +8,17 @@ interface TranscriptResult {
   status: string
   audio_duration?: number
   video_title?: string
-  service_used?: 'assemblyai' | 'youtube_direct'
+  service_used?: 'assemblyai' | 'assemblyai_chunked' | 'youtube_direct'
+  processing_time?: number
+  total_chunks?: number
+  chunks_info?: Array<{
+    chunk_id: number
+    status: string
+    processing_time?: number
+    start_time: number
+    end_time: number
+    success: boolean
+  }>
   segments?: Array<{
     text: string
     start: number
@@ -25,7 +35,8 @@ interface TranscriptResult {
   raw_segments?: number
 }
 
-type TranscriptService = 'assemblyai' | 'youtube_direct'
+// Updated to include all three service types
+type TranscriptService = 'assemblyai' | 'assemblyai_chunked' | 'youtube_direct'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -52,10 +63,13 @@ export default function Home() {
       let endpoint: string
       let body: any = { url }
 
+      // Route to the correct API endpoint
       if (selectedService === 'assemblyai') {
-        endpoint = '/api/transcribe'
+        endpoint = '/api/transcribe' // Regular AssemblyAI (single file)
+      } else if (selectedService === 'assemblyai_chunked') {
+        endpoint = '/api/transcribe-chunked' // AssemblyAI with chunking
       } else {
-        endpoint = '/api/transcribe-youtube'
+        endpoint = '/api/transcribe-youtube' // YouTube Direct
         // Add timestamp options for YouTube Direct
         body = {
           url,
@@ -97,8 +111,12 @@ export default function Home() {
       if (!response.ok) {
         // Handle different types of errors
         if (response.status === 503) {
-          const serviceName =
-            selectedService === 'assemblyai' ? 'AssemblyAI' : 'YouTube Direct'
+          let serviceName = 'Service'
+          if (selectedService === 'assemblyai') serviceName = 'AssemblyAI'
+          else if (selectedService === 'assemblyai_chunked')
+            serviceName = 'AssemblyAI Chunking'
+          else serviceName = 'YouTube Direct'
+
           throw new Error(
             `${serviceName} service is temporarily unavailable. Please try again in a few minutes.`
           )
@@ -260,12 +278,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Service Selection */}
+      {/* Service Selection - NOW WITH 3 OPTIONS */}
       <div className='mb-6 py-[15px]'>
         <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-[10px]'>
-          Services:
+          Choose Transcription Service:
         </h3>
         <div className='flex flex-col gap-[5px]'>
+          {/* YouTube Direct - Fastest */}
           <label className='flex items-center cursor-pointer block'>
             <input
               type='radio'
@@ -279,10 +298,18 @@ export default function Home() {
             />
             <div className='flex flex-col'>
               <span className='font-medium text-gray-900 dark:text-white'>
-                YouTube transcript API ~2-3 seconds
+                🚀 YouTube Direct API
+                <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
+                  ~2-4 seconds (Fastest - optimized!)
+                </span>
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                Extracts existing captions/transcripts directly from YouTube
               </span>
             </div>
           </label>
+
+          {/* AssemblyAI Regular - Medium speed */}
           <label className='flex items-center cursor-pointer block'>
             <input
               type='radio'
@@ -296,7 +323,39 @@ export default function Home() {
             />
             <div className='flex flex-col'>
               <span className='font-medium text-gray-900 dark:text-white'>
-                AssemblyAI
+                🤖 AssemblyAI (Regular)
+                <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
+                  ~30-120 seconds (Single file processing)
+                </span>
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                AI-powered transcription, works with any video
+              </span>
+            </div>
+          </label>
+
+          {/* AssemblyAI Chunked - Fast parallel processing */}
+          <label className='flex items-center cursor-pointer block'>
+            <input
+              type='radio'
+              name='service'
+              value='assemblyai_chunked'
+              checked={selectedService === 'assemblyai_chunked'}
+              onChange={(e) =>
+                setSelectedService(e.target.value as TranscriptService)
+              }
+              className='mr-[5px]'
+            />
+            <div className='flex flex-col'>
+              <span className='font-medium text-gray-900 dark:text-white'>
+                ⚡ AssemblyAI with Chunking
+                <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
+                  ~15-45 seconds (3x faster with parallel processing)
+                </span>
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                Automatically splits long videos into chunks for parallel
+                processing
               </span>
             </div>
           </label>
@@ -393,12 +452,14 @@ export default function Home() {
             className='h-[50px] rounded-full border-none outline-none px-[15px] cursor-pointer bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
           >
             {loading
-              ? `Transcribing with ${
+              ? `⏳ Processing with ${
                   selectedService === 'assemblyai'
-                    ? 'AssemblyAI'
+                    ? 'AssemblyAI (Regular)'
+                    : selectedService === 'assemblyai_chunked'
+                    ? 'AssemblyAI (Chunked)'
                     : 'YouTube Direct'
                 }...`
-              : 'Transcribe'}
+              : '🚀 Start Transcription'}
           </button>
         </div>
       </form>
@@ -416,18 +477,28 @@ export default function Home() {
             <div>
               {selectedService === 'assemblyai' ? (
                 <>
-                  Processing video with AssemblyAI... This may take several
-                  minutes for longer videos.
+                  Processing video with regular AssemblyAI... This may take
+                  several minutes for longer videos.
                   <br />
                   <span className='text-xs mt-1 block'>
-                    The app automatically selects lower quality audio for longer
-                    videos to ensure processing.
+                    Processing entire video as single file. For faster results,
+                    try AssemblyAI with Chunking!
+                  </span>
+                </>
+              ) : selectedService === 'assemblyai_chunked' ? (
+                <>
+                  Processing video with AssemblyAI Chunking Service... Much
+                  faster with parallel processing!
+                  <br />
+                  <span className='text-xs mt-1 block'>
+                    🚀 Videos are automatically split into chunks and processed
+                    in parallel for 3x speed improvement.
                   </span>
                 </>
               ) : (
                 <>
-                  Extracting transcript directly from YouTube... This is the
-                  fastest method.
+                  Extracting transcript directly from YouTube... This should be
+                  the fastest!
                   <br />
                   <span className='text-xs mt-1 block'>
                     {includeTimestamps
@@ -455,13 +526,28 @@ export default function Home() {
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       transcript.service_used === 'assemblyai'
                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                        : transcript.service_used === 'assemblyai_chunked'
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                     }`}
                   >
                     {transcript.service_used === 'assemblyai'
-                      ? 'AssemblyAI'
+                      ? 'AssemblyAI (Regular)'
+                      : transcript.service_used === 'assemblyai_chunked'
+                      ? 'AssemblyAI (Chunked)'
                       : 'YouTube Direct'}
                   </span>
+                  {transcript.processing_time && (
+                    <span className='px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+                      ⚡ {transcript.processing_time.toFixed(1)}s
+                    </span>
+                  )}
+                  {transcript.service_used === 'assemblyai_chunked' &&
+                    transcript.total_chunks && (
+                      <span className='px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
+                        📦 {transcript.total_chunks} chunks
+                      </span>
+                    )}
                 </div>
                 <div className='flex flex-wrap gap-4 text-xs'>
                   <span>
@@ -476,6 +562,11 @@ export default function Home() {
                   )}
                   {transcript.total_segments && (
                     <span>Segments: {transcript.total_segments}</span>
+                  )}
+                  {transcript.processing_time && (
+                    <span>
+                      Processing Time: {transcript.processing_time.toFixed(1)}s
+                    </span>
                   )}
                   {transcript.include_timestamps &&
                     selectedService === 'youtube_direct' && (
@@ -494,6 +585,55 @@ export default function Home() {
                       </span>
                     )}
                 </div>
+
+                {/* Chunking Performance Details */}
+                {transcript.service_used === 'assemblyai_chunked' &&
+                  transcript.chunks_info && (
+                    <div className='mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'>
+                      <h4 className='text-sm font-semibold text-gray-900 dark:text-white mb-2'>
+                        🚀 Chunking Performance Details
+                      </h4>
+                      <div className='grid grid-cols-2 md:grid-cols-4 gap-3 text-xs'>
+                        <div className='text-center'>
+                          <div className='font-semibold text-green-600 dark:text-green-400'>
+                            {
+                              transcript.chunks_info.filter((c) => c.success)
+                                .length
+                            }
+                          </div>
+                          <div className='text-gray-500'>Successful</div>
+                        </div>
+                        <div className='text-center'>
+                          <div className='font-semibold text-red-600 dark:text-red-400'>
+                            {
+                              transcript.chunks_info.filter((c) => !c.success)
+                                .length
+                            }
+                          </div>
+                          <div className='text-gray-500'>Failed</div>
+                        </div>
+                        <div className='text-center'>
+                          <div className='font-semibold text-blue-600 dark:text-blue-400'>
+                            {transcript.total_chunks}
+                          </div>
+                          <div className='text-gray-500'>Total Chunks</div>
+                        </div>
+                        <div className='text-center'>
+                          <div className='font-semibold text-purple-600 dark:text-purple-400'>
+                            {transcript.processing_time &&
+                            transcript.audio_duration
+                              ? Math.round(
+                                  transcript.audio_duration /
+                                    transcript.processing_time
+                                )
+                              : 0}
+                            x
+                          </div>
+                          <div className='text-gray-500'>Speed Factor</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
               </div>
             </div>
             <div className='flex gap-2 ml-4'>
